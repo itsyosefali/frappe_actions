@@ -1,80 +1,87 @@
 <template>
   <div class="dashboard-page">
-    <div class="content">
-      <div class="table-container">
-        <table class="table">
+    <div class="container mx-auto px-4 py-8">
+      <div class="overflow-x-auto">
+        <table class="table w-full">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Created On</th>
+              <th class="py-2">#</th>
+              <th class="py-2">Name</th>
+              <th class="py-2">Customer Name</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(customer, index) in visibleCustomers" :key="customer.id">
-              <td>{{ (currentPage - 1) * pageSize + index + 1 }}</td>
-              <td>{{ customer.name }}</td>
-              <td>{{ customer.description }}</td>
-              <td>{{ customer.created_on }}</td>
+              <td class="py-2">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
+              <td class="py-2">{{ customer.name }}</td>
+              <td class="py-2">{{ customer.customer_name }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="pagination">
-        <button class="page-button" :disabled="currentPage === 1" @click="previousPage">&lt;</button>
-        <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-        <button class="page-button" :disabled="currentPage === totalPages" @click="nextPage">&gt;</button>
+      <div class="flex justify-between items-center mt-4">
+        <button
+          class="px-4 py-2 rounded text-white bg-blue-500 hover:bg-blue-600"
+          :disabled="currentPage === 1"
+          @click="previousPage"
+        >
+          &lt;
+        </button>
+        <span class="text-gray-600">{{ currentPage }} / {{ totalPages }}</span>
+        <button
+          class="px-4 py-2 rounded text-white bg-blue-500 hover:bg-blue-600"
+          :disabled="currentPage === totalPages"
+          @click="nextPage"
+        >
+          &gt;
+        </button>
       </div>
     </div>
   </div>
 </template>
 
+
 <script>
 import { ref, computed, onMounted } from 'vue'
+import { fetchCustomers, createNewCustomer } from '../data/customerController'
 
+// Import Vuetify CSS file
+import 'vuetify/dist/vuetify.min.css'
 export default {
   setup() {
     const customers = ref([])
     const visibleCustomers = ref([])
     const pageSize = 10
-    let currentPage = 1
+    const currentPage = ref(1)
 
     onMounted(async () => {
       try {
-        const response = await fetch('/api/resource/Customer')
-        if (response.ok) {
-          const data = await response.json()
-          customers.value = data.data
-          updateVisibleCustomers()
-        } else {
-          console.error('Failed to fetch customer details:', response.status, response.statusText)
-        }
+        customers.value = await fetchCustomers()
+        updateVisibleCustomers()
       } catch (error) {
-        console.error('Error fetching customer details:', error.message)
+        console.error('Error fetching customer details:', error)
       }
     })
 
     const updateVisibleCustomers = () => {
-      const startIndex = (currentPage - 1) * pageSize
+      const startIndex = (currentPage.value - 1) * pageSize
       const endIndex = startIndex + pageSize
       visibleCustomers.value = customers.value.slice(startIndex, endIndex)
     }
 
     const previousPage = () => {
-      currentPage--
+      currentPage.value--
       updateVisibleCustomers()
     }
 
     const nextPage = () => {
-      currentPage++
+      currentPage.value++
       updateVisibleCustomers()
     }
 
     const createNewDocType = () => {
-      // Add your create logic here
-      console.log('Creating new DocType...')
+      createNewCustomer()
     }
 
     const totalPages = computed(() => Math.ceil(customers.value.length / pageSize))
@@ -93,6 +100,7 @@ export default {
   },
 }
 </script>
+
 
 <style scoped>
 .dashboard-page {
